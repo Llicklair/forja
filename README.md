@@ -45,6 +45,23 @@ El usuario elige cómo entrega el loop; sin decir nada, **recuerda el último mo
 
 ---
 
+## Comandos (índice)
+| Escribe… | Qué hace |
+|---|---|
+| `/forja` | Una pasada del loop de **revisión** (lente rotativa: bugs · seguridad · concurrencia · errores/borde · test-gaps · perf). |
+| `/loop forja` | Revisión **continua** (se auto-reprograma; para con `para`). El completo — más profundo, más tokens. |
+| `forja con PR` · `forja sin PR` | Fija el **modo de entrega**: PR aislado, o local sin commitear (revisas en el Source Control del IDE). |
+| `forja detector` | Modo **DETECTOR barato**: un detector AST escanea por ~0 tokens y el LLM solo arregla los **detalles atómicos reales** (lo arriesgado → inbox). |
+| `loop forja detector` | El modo detector, **continuo**. Lo más barato para pulir detalles atómicos sin disparar tokens. |
+| `/clean forja map` | Resetea el mapa de cobertura y **rota a la siguiente lente**. |
+| `/construye` | Una feature **Spec-Driven Build**: construir desde una spec (sobre GitHub Spec Kit) con verificación cruzada. |
+| `/loop construye` | Construcción **continua**, feature a feature (vía `converge`). |
+| `construye con PR` · `construye sin PR` | Modo de entrega del builder (igual que la forja). |
+| `para` | Detiene cualquier loop y muestra el resumen consolidado. |
+
+> ⚠️ Para arreglar **detalles atómicos sin gastar tokens**, usa `forja detector` — **no** `/loop forja` (ese
+> es el loop completo de 6 lentes). Ver [Modos](#modos-con-pr-o-sin-pr--el-pr-es-opcional) y la sección 1C del SKILL.
+
 ## La idea en una frase
 **Átomos para el trabajo; grafo + orquestador para el marco y la puerta.** Sub-agentes atómicos
 (baratos, paralelos, reversibles) hacen el trabajo enfocado; el orquestador sostiene la visión global y

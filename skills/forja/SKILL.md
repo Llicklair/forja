@@ -133,6 +133,28 @@ es un **denominador estable y con sentido** por proyecto, no el patrón concreto
 ### 1B. Por ÁREA (fallback sin GitNexus)
 - Lista los módulos/carpetas de alto nivel; recórrelos con cursor.
 
+### 1C. Modo DETECTOR (barato — descubrimiento DETERMINISTA, ~0 tokens de escaneo)
+Disparador: **"forja detector"** (una vuelta) · **"loop forja detector"** (continuo). Para cuando el valor
+está en **detalles atómicos** y NO quieres gastar tokens en pasadas LLM de 6 lentes (lo contrario del loop
+nocturno caro). Premisa: el LLM se SALTA detalles atómicos; un **detector estático/AST** los caza en
+segundos por ~0 tokens y el LLM solo **remedia los hits**. Barato y FINITO (converge cuando queda limpio).
+- **Detector**: usa el del proyecto si existe (p.ej. `tests/_defect_detectors.py` con `scan()` →
+  dict `familia → [sitios]`); si no, créalo incremental (UNA familia AST barata por vez: `except: pass`,
+  `== None`, `/ len(x)` sin guard, status-write sin guard, SELECT-then-add sin UNIQUE, httpx sin timeout,
+  `detail=str(e)` en un 500…). Mucho recall, poca precisión → la MAYORÍA serán **falsos positivos**.
+- **Ledger** FUERA del repo (`~/.claude/forja-state/<repo>/detector-inbox.md`): registra
+  `fixed + FP-descartados + pendientes`. Cada vuelta **resta el ledger** y tría **solo lo NUEVO** (no re-tría).
+- **La vuelta**: (1) `scan()` (~segundos); (2) triar lo nuevo en un **SUBAGENTE** (no inflar contexto);
+  (3) arreglar **solo los REALES** con guards mínimos contract-preserving, **inbox** lo arriesgado
+  (cálculo fiscal/financiero, migraciones) — sin sobre-afirmar concurrencia (son guards de re-entrada
+  SECUENCIAL, no de carrera); (4) verificar con **tests AFECTADOS** (segundos), NO la suite completa;
+  (5) actualizar el ledger.
+- **Checkpoint**: la **suite COMPLETA** se corre **UNA vez por sesión** (de fondo), nunca por vuelta (si no,
+  "una eternidad").
+- **Ratchet**: familias cuyo fix BORRA el patrón (`detail=str(e)`, `httpx` sin timeout) → test guardrail
+  baseline 0; familias tipo "guard añadido" (el patrón persiste) → **allowlist** (solo falla un sitio NUEVO).
+- Entrega: pr/no-pr como siempre; **nunca auto-merge ni commit sin tu OK**.
+
 ### Lente rotativa (profundidad, no repetición)
 Cada pasada completa sobre el proyecto usa una LENTE distinta; guarda qué lente toca en el estado:
 1 correctitud/bugs · 2 seguridad (authz, tenant/aislamiento, inyección, secretos) · 3 concurrencia/
