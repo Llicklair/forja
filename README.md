@@ -62,6 +62,76 @@ El usuario elige cómo entrega el loop; sin decir nada, **recuerda el último mo
 > ⚠️ Para arreglar **detalles atómicos sin gastar tokens**, usa `forja detector` — **no** `/loop forja` (ese
 > es el loop completo de 6 lentes). Ver [Modos](#modos-con-pr-o-sin-pr--el-pr-es-opcional) y la sección 1C del SKILL.
 
+## Ejemplo end-to-end (un run real)
+Para que sepas **qué esperar** antes de soltarlo, este es un turno real sobre un backend FastAPI +
+SQLAlchemy en modo `no-pr` (el loop edita el working tree **sin commitear**; tú revisas y commiteas).
+
+### 0 · Lo que tecleas
+```
+forja sin PR        # fija el modo de entrega (solo la 1ª vez; luego lo recuerda)
+/forja              # una pasada    (o  /loop forja  para el bucle continuo)
+```
+No hay más config. Requisito: el repo en git. GitNexus opcional (si está, el "marco global" es por grafo;
+si no, por grep).
+
+### 1 · Qué hace en UN turno — el sándwich híbrido
+Tomemos el flujo real `client_portal` con la lente **L2 (seguridad)**:
+
+1. **MARCO GLOBAL** (orquestador) — mapea el flujo, lista las funciones hermanas del mismo patrón
+   (`/auth`, `revoke`, `/me`) y pregunta *"¿quién ya frena esto?"* antes de gritar.
+2. **ÁTOMOS · finders** — N `loop-finder` en paralelo, cada uno con la lente. No editan; reportan con
+   evidencia. Aquí uno sospecha: `get_current_client_portal` valida el token de portal filtrando solo
+   `is_active=True`, **sin comprobar `expires_at`**.
+3. **test-first** — `loop-tester` escribe el repro *antes* del fix: token caducado→401, futuro→OK, NULL→OK.
+   Un test en rojo = bug real con repro.
+4. **fix atómico** — `loop-fixer` aplica el cambio mínimo (`or_(expires_at.is_(None), expires_at > now())`
+   en el WHERE) en un worktree aislado, y hace **escaneo de hermanas**: el único otro lookup del patrón
+   (`/auth`) ya estaba bien → fix de un solo sitio (no de una instancia suelta).
+5. **PUERTA · evaluador** — `loop-evaluator`, en **otro modelo**, corre las gates reales: suite COMPLETA
+   (no `-k`), dedup, y veta si el comentario sobre-afirma o si toca una zona NO-EDIT. Dictamen
+   **PASS / REJECT / BLOCKER**. Aquí: **PASS** (correcto, mínimo, aditivo, sin romper callers).
+
+### 2 · Lo que ves — un fix verificado
+Cada fix llega documentado así (extracto real, condensado):
+```
+✅ ARREGLADO (working tree, sin commitear) — expires_at no comprobado por-request
+  Severidad: media · Evaluador independiente (otro modelo): PASS
+  Bug (confirmado 3/3 escépticos): get_current_client_portal valida is_active=True pero
+    no expires_at → un token caducado con JWT aún vivo pasa el guard (ventana ≤24h).
+  Fix: añade or_(expires_at IS NULL, expires_at > now()) al WHERE. Hermanas: /auth ya OK → 1 sitio.
+  Test: tests/test_portal_a_repro.py (caducado→401, futuro→OK, NULL→OK).
+```
+En `no-pr` el cambio queda **sin commitear** en tu working tree; lo ves en el panel Source Control del IDE.
+
+### 3 · Lo que ves — el inbox (lo que NO se auto-arregla)
+Lo arriesgado/fiscal **no se parchea**: se drena a `inbox.md` **con un repro** para que **tú** decidas.
+Ejemplos reales de esa misma sesión:
+- **ALTA** — el gate de autonomía se bypasea para importes ≤5000 € (asiento/factura/nómina): 4 tools
+  hermanas no llaman a `evaluate_autonomy`. *No auto-fix: cambia comportamiento fiscal de todos los tenants.*
+- **ALTA (fiscal)** — doble presentación a la AEAT posible: `aeat_presentations` sin `UniqueConstraint`
+  → retry/doble-click crea dos registros enviables. *Requiere migración + decisión.*
+- **ALTA** — sobreventa de stock por carrera read-modify-write en `transfer()` sin `with_for_update()`.
+
+### 4 · Lo que ves — el mapa de cobertura (`coverage.md`)
+Recorre los flujos sin repetir y reporta un **% honesto**, separando amplitud de profundidad:
+```
+Pasada 1 (amplitud, lente mixta L1/L2) COMPLETA: 65/65 áreas tocadas ≥1 vez. ~16 fixes verificados.
+Pasada 2 · lente L3 (concurrencia/idempotencia): baja a "flujo fino" en las áreas críticas.
+PROFUNDIDAD real (la métrica honesta): ~10-15% (≈55-60 funciones de ~11.400 símbolos, 1 lente c/u).
+```
+La ✅ de un área = "barrida 1 flujo con 1 lente", **no** "revisada entera". `/clean forja map` archiva la
+pasada, resetea a ⬜ y rota a la siguiente lente.
+
+### 5 · Cómo lo cierras
+- **`no-pr`**: revisas los cambios en Source Control y **commiteas tú por lotes** (en el run real: 14 fixes
+  commiteados en 2 lotes, checkpoint suite completa 2437 passed).
+- **`pr`**: revisas la rama `loop/forja/auto` / el PR en GitHub. **Nunca se auto-mergea.**
+- **`para`**: detiene el loop y muestra el resumen consolidado (fixes verificados + items de inbox).
+
+### 6 · Coste real (de este turno)
+≈ **203K tokens** el turno completo de `client_portal` (verificación + fix + evaluador, **9 agentes**).
+Profundizar cuesta tokens: 1 lente es rápido y superficial; 6 lentes = barrido completo, más caro.
+
 ## La idea en una frase
 **Átomos para el trabajo; grafo + orquestador para el marco y la puerta.** Sub-agentes atómicos
 (baratos, paralelos, reversibles) hacen el trabajo enfocado; el orquestador sostiene la visión global y
