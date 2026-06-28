@@ -53,6 +53,8 @@ El usuario elige cómo entrega el loop; sin decir nada, **recuerda el último mo
 | `forja con PR` · `forja sin PR` | Fija el **modo de entrega**: PR aislado, o local sin commitear (revisas en el Source Control del IDE). |
 | `forja detector` | Modo **DETECTOR barato**: un detector AST escanea por ~0 tokens y el LLM solo arregla los **detalles atómicos reales** (lo arriesgado → inbox). |
 | `loop forja detector` | El modo detector, **continuo**. Lo más barato para pulir detalles atómicos sin disparar tokens. |
+| `forja max [Nk]` | Modo **MAX (afinado)** — el embudo barato→profundo. La capa gratis (AST + GitNexus) barre **todo** el repo; el LLM solo profundiza en el **top-K por valor**; fixes **por clase**; **presupuesto de tokens acotado** (`forja max 300k`). Barrido grande + máxima profundidad al menor coste. |
+| `loop forja max` | El modo MAX, **continuo** (se auto-reprograma; para con `para`). El más afinado para repasar a fondo gastando lo justo. |
 | `/clean forja map` | Resetea el mapa de cobertura y **rota a la siguiente lente**. |
 | `/construye` | Una feature **Spec-Driven Build**: construir desde una spec (sobre GitHub Spec Kit) con verificación cruzada. |
 | `/loop construye` | Construcción **continua**, feature a feature (vía `converge`). |

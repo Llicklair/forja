@@ -148,6 +148,38 @@ segundos por ~0 tokens y el LLM solo **remedia los hits**. Barato y FINITO (conv
   baseline 0; familias tipo "guard añadido" (el patrón persiste) → **allowlist** (solo falla un sitio NUEVO).
 - Entrega: pr/no-pr como siempre; **nunca auto-merge ni commit sin tu OK**.
 
+### 1D. Modo MAX (afinado — barrido grande + profundidad máxima al MENOR coste)
+Disparador: **"forja max"** (una pasada) · **"loop forja max"** (continuo). Es el **embudo**: une lo barato
+(§1C) con lo profundo (§1A) para lograr las cuatro cosas A LA VEZ — barrido grande, soluciones atómicas
+grandes, máxima profundidad, mínimo coste. Regla de oro: **la capa gratis barre TODO; el LLM solo
+profundiza donde hay valor.** Sin dependencias externas (AST + GitNexus).
+1. **BARRIDO BARATO (≈0 tokens, todo el repo)** — corre el detector AST (§1C `scan()`) y, si hay GitNexus,
+   mapea flujos + `gitnexus_impact` de cada hit. Salida = lista de candidatos. **Aún NADA de LLM.**
+2. **RANK por valor** — ordena por `severidad(familia) × blast-radius(grafo) × confianza`. Resta el ledger
+   (§1C): solo lo NUEVO o lo cambiado (prioriza `git log` reciente). El ruido advisory se descarta de entrada.
+3. **PRESUPUESTO DURO** — fija un techo de tokens por pasada (p.ej. "forja max 300k"); coge el **top-K** de
+   candidatos que entra en el techo. Lo que no entra → vuelta siguiente (el ledger lo recuerda). El coste
+   es **acotado y predecible**, no "hasta que se acabe".
+4. **PROFUNDIDAD NARROW (LLM caro, SOLO en el top-K)** — por cada flujo candidato, **UN finder lee el
+   código UNA vez y aplica las 6 lentes de golpe** (no 6 agentes releyendo lo mismo → ~6× más barato).
+   Confirma el bug con repro; descarta el FP.
+5. **FIX ATÓMICO GRANDE (por CLASE, no por instancia)** — escaneo de hermanas (§4): si el bug es un patrón,
+   el fixer extrae el arreglo común (helper compartido) y lo aplica a TODA la familia en un lote + **1 test
+   que cubre la clase**. Una solución grande > N parches sueltos.
+6. **PUERTA adversarial** (§4, modelo distinto) — suite COMPLETA + prueba de barrido-por-clase
+   (`nº sitios del patrón == saneados + inbox`) + sin sobre-afirmar. REJECT → vuelve al fixer (máx 3 rondas).
+
+**Palancas de coste (todas activas en MAX):**
+- **Modelo por etapa**: triaje/rank en modelo **barato** (haiku); finder profundo en sonnet; fix difícil +
+  evaluador en el **fuerte**. No pagues opus por un grep.
+- **Ratchet/ledger** (§1C): nunca re-analiza lo ya visto; cada vuelta solo lo nuevo/cambiado.
+- **Una lectura, 6 lentes**: el coste real es LEER el código — reutiliza esa lectura para las 6 lentes.
+- **Presupuesto duro**: el top-K se corta por tokens, no por agotamiento.
+
+Honestidad: MAX **no** hace gratis el análisis profundo de TODO — hace profundo SOLO lo que la capa barata
+marcó como valioso; el resto queda en el ledger para vueltas siguientes. El `coverage.md` reporta el % real
+cubierto en profundidad (no el barato). Entrega: pr/no-pr como siempre; **nunca auto-merge ni commit sin tu OK**.
+
 ### Lente rotativa (profundidad, no repetición)
 Cada pasada completa sobre el proyecto usa una LENTE distinta; guarda qué lente toca en el estado:
 1 correctitud/bugs · 2 seguridad (authz, tenant/aislamiento, inyección, secretos) · 3 concurrencia/
