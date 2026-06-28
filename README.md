@@ -8,6 +8,9 @@ tú eliges. **Nunca auto-mergea ni commitea sin tu OK; tú decides.**
 Genérico para cualquier stack/repo. Vive en `~/.claude/` y se activa con `/loop forja` (continuo) o
 `/forja` (una pasada).
 
+> 🧱 **¿Construir, no solo revisar?** Este kit incluye la modalidad hermana **`/construye`** (Spec-Driven
+> Build): edifica features nuevas desde una spec con el mismo motor verificado. Ver la sección **/construye** abajo.
+
 ## Quickstart (≈60s)
 Apúntalo a un repo en git y déjalo trabajar:
 ```
@@ -89,6 +92,25 @@ la puerta de calidad que a los átomos les falta.
 - `loop-evaluator` — adversarial, otro modelo; ejecuta las gates reales; PASS/REJECT/BLOCKER. El "decir no".
   **REJECT automático** si un fix toca NO-EDIT o si un comentario sobre-afirma garantía concurrente.
 
+## Modalidad hermana: `/construye` — Spec-Driven Build (la forja que edifica)
+La forja **revisa** lo que existe; **`/construye`** **edifica** lo que falta desde una **especificación**.
+Misma regla de oro: evaluador independiente, gate de suite, **nunca auto-merge**.
+
+No reinventa el flujo: adopta **[GitHub Spec Kit](https://github.com/github/spec-kit)** para la mitad
+delantera (`constitution → spec → clarify → plan → tasks`) y le injerta el motor verificado de la forja en
+`/speckit-implement` — el hueco que Spec Kit deja a propósito ("external verifier handles verification"):
+- **test-first de ACEPTACIÓN**: los criterios de la spec se vuelven un test en rojo → construir hasta verde.
+- **generador≠evaluador** en **otro modelo**: verifica que cumple la spec, sin auto-aprobarse.
+- **gate de suite COMPLETA** (no romper lo existente), **barrido por-clase**, zonas **NO-EDIT**.
+- **`/speckit-converge`** para brownfield: mapea intención→código **atado al scope del plan** (no al repo
+  entero) y añade solo lo que falta → **viable en proyectos grandes, feature a feature**.
+
+Requisito: Spec Kit instalado
+(`uvx --from git+https://github.com/github/spec-kit.git specify init . --integration claude`).
+Úsalo con **`/construye`** (una feature/lote) o **`/loop construye`** (continuo); modos `pr`/`no-pr` igual
+que la forja. Detalle en [`skills/construye/SKILL.md`](skills/construye/SKILL.md); hook opcional en
+[`integrations/speckit-after-implement.yml`](integrations/speckit-after-implement.yml).
+
 ## Instalación
 
 ### A) Como plugin de Claude Code (recomendado)
@@ -99,13 +121,14 @@ Este repo ES un plugin + su marketplace (`.claude-plugin/plugin.json` + `marketp
   (o la URL) y luego `/plugin install forja@forja-marketplace`.
 - También por CLI: `claude plugin marketplace add <url-o-ruta>` + `claude plugin install forja@forja-marketplace`.
 
-La skill queda como `/forja` y los 4 subagentes (`loop-finder/fixer/tester/evaluator`) se auto-descubren
-y los invoca la skill internamente.
+Las skills quedan como `/forja` (revisar) y `/construye` (edificar, Spec-Driven Build); los 4 subagentes
+(`loop-finder/fixer/tester/evaluator`) se auto-descubren y los invocan internamente.
 
 ### B) Manual (sin plugin)
 ```
-cp -r skills/forja  ~/.claude/skills/forja
-cp agents/loop-*.md ~/.claude/agents/
+cp -r skills/forja      ~/.claude/skills/forja
+cp -r skills/construye  ~/.claude/skills/construye   # modalidad Spec-Driven Build (opcional)
+cp agents/loop-*.md     ~/.claude/agents/
 ```
 
 Necesita el repo objetivo en git. GitNexus (`npx gitnexus analyze`) es opcional pero recomendado (da el

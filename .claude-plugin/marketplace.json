@@ -4,15 +4,15 @@
     "name": "Marcos Recio"
   },
   "metadata": {
-    "description": "Loop Engineering portable — bucle autónomo de revisión de código (finder/fixer/tester/evaluator).",
-    "version": "2.0.0"
+    "description": "Loop Engineering portable — revisión autónoma (/forja) y construcción Spec-Driven verificada (/construye).",
+    "version": "2.1.0"
   },
   "plugins": [
     {
       "name": "forja",
       "source": "./",
-      "description": "Loop engineering portable: skill /forja + 4 subagentes (finder/fixer/tester/evaluator). Revisión autónoma por flujos (GitNexus), test-first, fan-out de lentes, mapa de cobertura, PRs sin auto-merge.",
-      "version": "2.0.0",
+      "description": "Loop engineering portable: skills /forja (revisar) + /construye (Spec-Driven Build) + 4 subagentes. Revisión autónoma por flujos (GitNexus), test-first, fan-out de lentes, mapa de cobertura; construcción desde spec sobre GitHub Spec Kit; verificación cruzada y PRs sin auto-merge.",
+      "version": "2.1.0",
       "author": {
         "name": "Marcos Recio"
       },
@@ -22,7 +22,8 @@
         "autonomous-review",
         "gitnexus",
         "test-first",
-        "refactoring"
+        "refactoring",
+        "spec-driven"
       ]
     }
   ]

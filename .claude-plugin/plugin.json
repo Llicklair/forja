@@ -1,7 +1,7 @@
 {
   "name": "forja",
-  "version": "2.0.0",
-  "description": "Loop Engineering portable: bucle autónomo que revisa un proyecto por flujos de ejecución (GitNexus), escribe tests (test-first), arregla lo seguro en worktrees aislados, lo verifica con un evaluador adversarial independiente y abre PRs — nunca auto-mergea. Incluye la skill /forja y 4 subagentes (finder/fixer/tester/evaluator), lente rotativa o en paralelo, marco global por grafo y mapa de cobertura.",
+  "version": "2.1.0",
+  "description": "Loop Engineering portable: bucle autónomo que revisa un proyecto por flujos de ejecución (GitNexus), escribe tests (test-first), arregla lo seguro en worktrees aislados, lo verifica con un evaluador adversarial independiente y abre PRs — nunca auto-mergea. Incluye la skill /forja y 4 subagentes (finder/fixer/tester/evaluator), lente rotativa o en paralelo, marco global por grafo y mapa de cobertura. Trae además la modalidad hermana /construye (Spec-Driven Build sobre GitHub Spec Kit): edifica features nuevas desde una spec con el mismo motor verificado (test-first de aceptación, generador≠evaluador, gate de suite, barrido por-clase, nunca auto-merge).",
   "author": {
     "name": "Marcos Recio"
   },
@@ -15,7 +15,10 @@
     "test-first",
     "refactoring",
     "code-review",
-    "subagents"
+    "subagents",
+    "spec-driven",
+    "spec-kit",
+    "code-generation"
   ],
   "skills": "./skills/",
   "agents": "./agents/"

@@ -1,0 +1,25 @@
+# integrations/speckit-after-implement.yml
+#
+# OPCIONAL — refuerzo. El orquestador /construye YA verifica por sí mismo.
+# Este hook hace que la verificación de la forja se ejecute TAMBIÉN cuando
+# alguien corre /speckit-implement a mano (fuera del loop /construye).
+#
+# Cómo usarlo: copia el bloque `hooks:` dentro de `.specify/extensions.yml`
+# del repo objetivo (créalo si no existe). Spec Kit construye el slash-command
+# reemplazando puntos por guiones: `construye.verify` -> `/construye-verify`.
+#
+# REQUISITO: expone la verificación como un comando invocable — p.ej. una skill
+# `/construye-verify` que lance loop-evaluator sobre el FEATURE_DIR en un modelo
+# DISTINTO al implementer. Si no lo tienes, no uses este hook: deja que el
+# orquestador /construye haga la verificación nativamente.
+
+hooks:
+  after_implement:
+    - command: construye.verify        # -> /construye-verify
+      optional: false                  # mandatory: bloquea el lote si falla
+      enabled: true
+      description: >
+        Verificación cruzada de la forja: corre la suite COMPLETA (gate de
+        regresión), comprueba que el código cumple la spec y respeta la
+        constitución / zonas NO-EDIT, con un evaluador en OTRO modelo.
+        REJECT -> el item vuelve al implementer o va a inbox.
