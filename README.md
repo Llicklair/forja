@@ -11,6 +11,58 @@ Genérico para cualquier stack/repo. Vive en `~/.claude/` y se activa con `/loop
 > 🧱 **¿Construir, no solo revisar?** Este kit incluye la modalidad hermana **`/construye`** (Spec-Driven
 > Build): edifica features nuevas desde una spec con el mismo motor verificado. Ver la sección **/construye** abajo.
 
+## Cómo funciona, en simple (pero entero)
+*Si es tu primera vez, lee solo esto. Sin jerga.*
+
+**La forja es un ayudante que revisa tu código solo y te propone arreglos. Nunca guarda ni sube nada sin tu
+permiso.** Imagínalo como un **inspector que recorre tu casa**: arregla él mismo un enchufe suelto, pero si
+algo es delicado (la caldera, el gas) no lo toca — te deja una nota para que decidas tú.
+
+### Qué hace, paso a paso
+Cada ronda de trabajo sigue siempre los mismos pasos:
+1. **Elige por dónde mirar.** No va a lo loco: lleva un **mapa** de qué partes ya revisó, para no repetir
+   ni dejarse nada.
+2. **Busca fallos con "lentes".** Una lente = una forma de mirar. Mira el mismo código buscando, por turnos,
+   6 tipos de problema: *¿la lógica está bien? ¿es seguro? ¿falla si dos personas lo usan a la vez? ¿maneja
+   los errores? ¿tiene pruebas? ¿va rápido?* Cada lente caza una familia de fallos.
+3. **Escribe una prueba que demuestra el fallo.** Antes de arreglar, escribe un test pequeño que falla por
+   culpa del bug. Si falla, el bug es **real** (no inventado). Esta es la parte más valiosa.
+4. **Arregla — pero solo lo seguro.** Hace el cambio más pequeño que soluciona el fallo, y mira si el mismo
+   error está en otros sitios parecidos para arreglarlos **todos de golpe** (no uno y dejar cuatro).
+5. **Un juez independiente lo revisa.** Otro ayudante —con un cerebro distinto, para no tener los mismos
+   puntos ciegos— intenta tumbar el arreglo: corre **todas** las pruebas del proyecto y comprueba que no
+   rompió nada. Si no le convence → lo rechaza y se reintenta.
+6. **Te lo entrega.** Lo que pasó el juez queda listo para que lo mires. Lo dudoso o delicado va a una
+   **lista aparte** (el *inbox*), con su prueba, para que decidas tú.
+
+### Quién hace cada cosa (los 4 ayudantes)
+- **El buscador** — encuentra fallos y los señala. No toca nada.
+- **El probador** — escribe la prueba que demuestra el fallo.
+- **El arreglador** — hace el arreglo, en una copia aparte para no tocar tu trabajo.
+- **El juez** — el "no": ejecuta todo y dice si el arreglo vale.
+
+### Dónde te deja el trabajo (tú eliges)
+- **sin PR** — cambia los archivos en tu ordenador, **sin guardarlos**; tú los miras y los guardas cuando quieras.
+- **con PR** — deja los cambios apartados en GitHub para revisarlos ahí.
+- En ambos: **nunca guarda ni sube solo.**
+
+### Cuánto gasta (los modos)
+Revisar a fondo cuesta "tokens" (lo que consume la IA). Por eso hay modos, de barato a caro:
+- **`forja detector`** — barato; solo pule detalles pequeños y mecánicos.
+- **`/forja`** — una revisión normal, una pasada.
+- **`/loop forja`** — el más a fondo y el más caro (no para hasta que dices `para`).
+- **`forja max`** — el listo: una herramienta **gratis** mira TODO rápido y marca lo sospechoso; la IA cara
+  solo profundiza en esos pocos sitios → revisa mucho gastando poco. Con tope de gasto: `forja max 300k`.
+
+### La verdad honesta
+- **No encuentra el 100%.** Sube el nivel; no hace magia.
+- El **porcentaje** que muestra es "cuánto terreno he pisado", no "cuánto he revisado a fondo" — te lo dice
+  claro para no engañarte.
+- Lo que no se puede probar de verdad (cosas que necesitan una base de datos real) lo marca como
+  "probablemente bien, pero sin probar", **no** como "verificado".
+
+> Lo de abajo es lo mismo, pero en detalle técnico. Si con esto te basta, ya puedes usarlo.
+
 ## Quickstart (≈60s)
 Apúntalo a un repo en git y déjalo trabajar:
 ```
