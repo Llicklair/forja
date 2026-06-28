@@ -1,8 +1,9 @@
 # /forja — Loop Engineering portable
 
 Un **bucle autónomo de revisión de código** que recorre un proyecto entero en profundidad y mejora el
-código sin que teclees: descubre por flujos de ejecución, escribe tests, arregla lo seguro en ramas
-aisladas, lo verifica con un evaluador independiente, y abre PRs — **nunca auto-mergea; tú decides**.
+código sin que teclees: descubre por flujos de ejecución, escribe tests, arregla lo seguro, lo verifica con
+un evaluador independiente, y te lo entrega para revisar — en **PR** (rama aislada) o **en local sin PR**,
+tú eliges. **Nunca auto-mergea ni commitea sin tu OK; tú decides.**
 
 Genérico para cualquier stack/repo. Vive en `~/.claude/` y se activa con `/loop forja` (continuo) o
 `/forja` (una pasada).
@@ -19,10 +20,25 @@ Apúntalo a un repo en git y déjalo trabajar:
 # …o…
 /loop forja       # bucle continuo (para con "para")
 ```
-**Qué obtienes**: tras la pasada, una rama `loop/forja/auto` + un PR único con fixes verificados
-(cada uno con su test/repro), un `tasks/forja/coverage.md` con el % de avance, y lo dudoso drenado a
-`tasks/forja/inbox/` para que tú decidas. **Nunca mergea solo.** Requiere el repo en git; GitNexus es
-opcional (mejora el marco global). Sin plugin, ver [Instalación → B) Manual](#b-manual-sin-plugin).
+**Qué obtienes**: fixes verificados (cada uno con su test/repro) listos para revisar, un mapa de cobertura
+con el % de avance, y lo dudoso drenado a un inbox para que tú decidas. **Nunca mergea ni commitea solo.**
+Requiere el repo en git; GitNexus es opcional (mejora el marco global). Sin plugin, ver
+[Instalación → B) Manual](#b-manual-sin-plugin).
+
+## Modos: con-PR o sin-PR — **el PR es opcional**
+El usuario elige cómo entrega el loop; sin decir nada, **recuerda el último modo**:
+- **`pr`** (aislado): los fixers trabajan en un worktree (`loop/forja/auto`) y se acumula **un PR** que
+  crece (nunca se mergea solo). Para revisar en GitHub. Dispáralo con **"forja con PR"**.
+- **`no-pr`** (local): los fixers editan tu **working tree directamente, SIN commitear** — revisas los
+  cambios en el panel Source Control de tu IDE y commiteas tú por lotes. Sin PR, sin push. El estado del
+  loop vive **fuera del repo** (`~/.claude/forja-state/<repo>/`) para no ensuciar `tasks/`. Dispáralo con
+  **"forja sin PR"**.
+- En ambos modos: evaluador independiente + **nunca mergea ni commitea sin tu OK**.
+
+> **Seguridad — ejecutar las gates corre código del repo objetivo** (`conftest.py`, scripts de
+> `package.json`…) con tus privilegios; la allowlist filtra el *nombre* del comando, no el *payload*. En
+> **tu repo / el de tu equipo**: auto-ejecuta. En un **repo ajeno sin auditar**: usa sandbox (red cortada +
+> FS limitado al worktree) o trátalo como "verificación no disponible" → el fix va a inbox sin ejecutar.
 
 ---
 
@@ -49,11 +65,29 @@ la puerta de calidad que a los átomos les falta.
 - *Puerta por lote*: suite COMPLETA + dedup + crítico del lote como conjunto. Aquí caen las fugas que un
   `-k` no ve.
 
+## Gates duras (bloquean el lote — reglas, no consejos)
+- **Zona NO-EDIT (fiscal/contable/nómina · cripto/pagos)**: el fixer tiene **PROHIBIDO editar** cálculo
+  fiscal (modelos AEAT, IVA, retenciones, asientos, numeración correlativa, IRPF/IS) y pagos/cripto.
+  Reporta a inbox **con un test que demuestra el problema** — un LLM no es asesor fiscal. El evaluador hace
+  **REJECT automático** si un fix toca un fichero NO-EDIT. Cambiar una cifra fiscal "porque parece más
+  correcta" es justo lo que el loop NO debe hacer.
+- **Barrido por-clase**: antes de cerrar el lote, por CADA patrón arreglado el orquestador grepea TODO el
+  repo y prueba `nº sitios del patrón == saneados + inbox`. "Lo arreglé" exige la **lista exhaustiva del
+  grep**, no el sitio tocado; un fix de UNA instancia sin esa prueba → REJECT. (El bug casi nunca está en
+  un solo sitio: `delete→409` aparecía en 5 entidades.)
+- **No sobre-afirmar**: un `SELECT…then-check` sin `with_for_update()`/UNIQUE protege el caso SECUENCIAL,
+  no el concurrente. El evaluador REJECT si un comentario promete garantía concurrente que el mecanismo no
+  da; se reescribe a la verdad ("idempotente en secuencial; la carrera real → inbox") o se pone el lock.
+- **Suite COMPLETA por lote** (no `-k`): las fugas entre tests (estado compartido / fixtures) solo aparecen
+  corriendo la suite entera.
+
 ## Los agentes (`agents/`)
 - `loop-finder` — explora un flujo con UNA lente; reporta defectos con evidencia. No edita.
 - `loop-fixer` — implementa UN arreglo en un worktree; verifica con las gates; commitea. No abre PR.
+  **Prohibido tocar zonas NO-EDIT** (fiscal/pagos): esas van a inbox con repro, no se parchean.
 - `loop-tester` — escribe un test/repro (test-first). Aditivo, auto-verificable.
 - `loop-evaluator` — adversarial, otro modelo; ejecuta las gates reales; PASS/REJECT/BLOCKER. El "decir no".
+  **REJECT automático** si un fix toca NO-EDIT o si un comentario sobre-afirma garantía concurrente.
 
 ## Instalación
 
@@ -83,6 +117,7 @@ marco global por grafo; si no, usa grep).
 ## Uso
 - `/loop forja` — bucle continuo (se auto-reprograma). Para con "para".
 - `/forja` — una sola pasada.
+- **"forja con PR"** / **"forja sin PR"** — fija el modo de entrega (ver **Modos**). Sin decirlo, usa el último.
 - `/clean forja map` (o "resetea el mapa") — archiva la pasada, vuelve la cobertura a ⬜, pasa a la
   siguiente lente.
 - **Lentes en paralelo** — elige cuántas (1-6) se barren por flujo. 6 = barrido completo por visita (la
@@ -95,7 +130,8 @@ marco global por grafo; si no, usa grep).
   área revisada. Reporta siempre el matiz.
 - Lo no testeable con la infra (concurrencia que pide BD real, RLS, locks) se etiqueta **"correcto por
   construcción, sin prueba empírica"**, no "verificado".
-- **Nada se mergea sin tu OK.**
+- **Nada se mergea ni se commitea sin tu OK.** En modo `no-pr` los cambios quedan sin commitear para que
+  los revises y commitees tú; en `pr`, en un PR que nunca se auto-mergea.
 
 ## Lecciones cosidas al motor (de uso real)
 Gate de suite completa (una fixture filtró estado y rompió 11 tests que ningún `-k` veía) · el finder

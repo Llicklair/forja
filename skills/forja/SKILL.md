@@ -14,6 +14,22 @@ El generador no se auto-aprueba: lo verifica un evaluador independiente (otro mo
 > Vive en `~/.claude/` → disponible en cualquier repo. Un proyecto puede tener su propio
 > `.claude/skills/forja` que lo especialice (p.ej. con reglas fiscales); ese gana localmente.
 
+## Modos de entrega: con-PR / sin-PR — **el PR es OPCIONAL**
+El usuario elige cómo entrega el loop (por defecto recuerda el último modo):
+- **`pr`** (aislado): los fixers trabajan en un **worktree** (`loop/forja/auto`) y se acumula **UN PR**
+  (créalo la 1ª vez, luego solo push). NUNCA mergea. Para revisar en GitHub. Es el flujo de §3 y §5.
+- **`no-pr`** (local): los fixers editan **directamente el working tree principal**, **SIN commitear** —
+  para que revises los cambios en el panel Source Control de tu IDE y commitees tú por lotes. **Sin PR, sin
+  merge, sin push.** Reglas duras de este modo:
+  - Un fix rechazado se revierte **por-fichero** (`git checkout HEAD -- <ficheros>` + borrar los tests
+    nuevos). **NUNCA** `git reset --hard`/`clean` en el tree principal (borraría tu trabajo sin commitear).
+  - **Fixers en SERIE** (no en paralelo): dos fixers a la vez sobre el mismo working tree se pisarían.
+  - El **estado del loop vive FUERA del repo** (p.ej. `~/.claude/forja-state/<repo>/{state,coverage,inbox}.md`)
+    para no llenar `tasks/` de markdowns.
+- **Disparadores**: "forja sin PR" → `no-pr` · "forja con PR" → `pr` · "forja" / "/loop forja" → el modo
+  guardado. Cambia de modo solo si el usuario lo pide.
+- En AMBOS modos: el evaluador independiente verifica igual, y **NUNCA se mergea/commitea sin tu OK**.
+
 ## La forma: sándwich híbrido (átomos dentro de un marco global)
 Los sub-agentes son ATÓMICOS a propósito — caben en contexto, paralelizan, se revierten. Pero lo atómico
 CIEGA a lo sistémico: interacciones entre tests, mitigaciones aguas abajo, **implementaciones hermanas**
