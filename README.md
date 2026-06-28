@@ -186,12 +186,13 @@ En `no-pr` el cambio queda **sin commitear** en tu working tree; lo ves en el pa
 ### 3 · Lo que ves — el inbox (lo que NO se auto-arregla)
 Lo que no es un arreglo seguro y objetivo **no se parchea**: se drena a `inbox.md` **con un repro** para
 que **tú** decidas (necesita una migración, tiene blast-radius alto, o es una decisión de negocio).
-Ejemplos reales de esa misma sesión:
-- **ALTA** — el gate de autonomía se bypasea para importes ≤5000 € (asiento/factura/nómina): 4 tools
-  hermanas no llaman a `evaluate_autonomy`. *No auto-fix: cambia comportamiento fiscal de todos los tenants.*
-- **ALTA (fiscal)** — doble presentación a la AEAT posible: `aeat_presentations` sin `UniqueConstraint`
-  → retry/doble-click crea dos registros enviables. *Requiere migración + decisión.*
-- **ALTA** — sobreventa de stock por carrera read-modify-write en `transfer()` sin `with_for_update()`.
+Tres ejemplos típicos:
+- **ALTA — necesita migración** — una tabla sin restricción `UNIQUE` deja que un reintento/doble-click
+  cree dos filas iguales. El arreglo correcto toca la base de datos → migración + tu decisión.
+- **ALTA — cambia el comportamiento de todos** — una comprobación que falta se repite en varios sitios
+  hermanos; arreglarla altera lo que ven todos los usuarios → revisión humana antes de aplicar.
+- **ALTA — no se puede probar aquí** — condición de carrera: dos peticiones a la vez sobre el mismo
+  recurso se pisan (falta un bloqueo). La infra actual no lo reproduce (pide base de datos real) → se marca.
 
 ### 4 · Lo que ves — el mapa de cobertura (`coverage.md`)
 Recorre los flujos sin repetir y reporta un **% honesto**, separando amplitud de profundidad:
