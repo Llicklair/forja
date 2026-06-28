@@ -142,46 +142,32 @@ PUERTA adversarial (otro modelo): suite completa + barrido por-clase + sin sobre
 Úsalo: `forja max` (una pasada) · `forja max 300k` (con presupuesto) · `loop forja max` (continuo). Detalle
 en la **§1D** de [`skills/forja/SKILL.md`](skills/forja/SKILL.md).
 
-## Ejemplo end-to-end (un run real)
-Para que sepas **qué esperar** antes de soltarlo, este es un turno real sobre un backend FastAPI +
-SQLAlchemy en modo `no-pr` (el loop edita el working tree **sin commitear**; tú revisas y commiteas).
+## Ejemplo: cómo es un turno, de principio a fin
+Para que sepas **qué esperar** —da igual tu lenguaje o framework—, seguimos un ejemplo sencillo y universal:
+*una sesión de usuario que sigue funcionando aunque ya haya caducado*.
 
 ### 0 · Lo que tecleas
 ```
 forja sin PR        # fija el modo de entrega (solo la 1ª vez; luego lo recuerda)
 /forja              # una pasada    (o  /loop forja  para el bucle continuo)
 ```
-No hay más config. Requisito: el repo en git. GitNexus opcional (si está, el "marco global" es por grafo;
-si no, por grep).
+No hay más configuración. Lo único imprescindible: el proyecto en git.
 
-### 1 · Qué hace en UN turno — el sándwich híbrido
-Tomemos el flujo real `client_portal` con la lente **L2 (seguridad)**:
+### 1 · Qué pasa en una ronda
+1. **Mira el conjunto, no una línea suelta** — localiza la parte a revisar y se pregunta *"¿este mismo
+   problema estará en más sitios?"*.
+2. **Busca el fallo** — un ayudante detecta que, al validar la sesión, se comprueba que está *activa* pero
+   **no** que no haya caducado → una sesión vieja sigue colándose. Lo reporta; no toca nada.
+3. **Escribe una prueba que lo demuestra** — crea un test: *sesión caducada → debe rechazarse*. El test
+   **falla** → el fallo es real (no inventado).
+4. **Lo arregla, mínimo** — añade la comprobación de caducidad y revisa los sitios hermanos; donde ya
+   estaba bien, no lo toca.
+5. **Un juez lo aprueba o lo tumba** — otro ayudante, con **otro modelo** para no compartir puntos ciegos,
+   corre **todas** las pruebas y comprueba que no rompió nada. Solo si pasa, cuenta como arreglado.
 
-1. **MARCO GLOBAL** (orquestador) — mapea el flujo, lista las funciones hermanas del mismo patrón
-   (`/auth`, `revoke`, `/me`) y pregunta *"¿quién ya frena esto?"* antes de gritar.
-2. **ÁTOMOS · finders** — N `loop-finder` en paralelo, cada uno con la lente. No editan; reportan con
-   evidencia. Aquí uno sospecha: `get_current_client_portal` valida el token de portal filtrando solo
-   `is_active=True`, **sin comprobar `expires_at`**.
-3. **test-first** — `loop-tester` escribe el repro *antes* del fix: token caducado→401, futuro→OK, NULL→OK.
-   Un test en rojo = bug real con repro.
-4. **fix atómico** — `loop-fixer` aplica el cambio mínimo (`or_(expires_at.is_(None), expires_at > now())`
-   en el WHERE) en un worktree aislado, y hace **escaneo de hermanas**: el único otro lookup del patrón
-   (`/auth`) ya estaba bien → fix de un solo sitio (no de una instancia suelta).
-5. **PUERTA · evaluador** — `loop-evaluator`, en **otro modelo**, corre las gates reales: suite COMPLETA
-   (no `-k`), dedup, y veta si el comentario sobre-afirma o si un cambio altera la semántica sin prueba.
-   Dictamen **PASS / REJECT / BLOCKER**. Aquí: **PASS** (correcto, mínimo, aditivo, sin romper callers).
-
-### 2 · Lo que ves — un fix verificado
-Cada fix llega documentado así (extracto real, condensado):
-```
-✅ ARREGLADO (working tree, sin commitear) — expires_at no comprobado por-request
-  Severidad: media · Evaluador independiente (otro modelo): PASS
-  Bug (confirmado 3/3 escépticos): get_current_client_portal valida is_active=True pero
-    no expires_at → un token caducado con JWT aún vivo pasa el guard (ventana ≤24h).
-  Fix: añade or_(expires_at IS NULL, expires_at > now()) al WHERE. Hermanas: /auth ya OK → 1 sitio.
-  Test: tests/test_portal_a_repro.py (caducado→401, futuro→OK, NULL→OK).
-```
-En `no-pr` el cambio queda **sin commitear** en tu working tree; lo ves en el panel Source Control del IDE.
+### 2 · Lo que te entrega
+Cada arreglo viene con su ficha: **qué fallaba**, **el cambio** que hizo y **la prueba** que lo respalda.
+En modo *sin PR* lo ves en el panel de cambios de tu editor y lo guardas tú cuando quieras.
 
 ### 3 · Lo que ves — el inbox (lo que NO se auto-arregla)
 Lo que no es un arreglo seguro y objetivo **no se parchea**: se drena a `inbox.md` **con un repro** para
@@ -194,25 +180,18 @@ Tres ejemplos típicos:
 - **ALTA — no se puede probar aquí** — condición de carrera: dos peticiones a la vez sobre el mismo
   recurso se pisan (falta un bloqueo). La infra actual no lo reproduce (pide base de datos real) → se marca.
 
-### 4 · Lo que ves — el mapa de cobertura (`coverage.md`)
-Recorre los flujos sin repetir y reporta un **% honesto**, separando amplitud de profundidad:
-```
-Pasada 1 (amplitud, lente mixta L1/L2) COMPLETA: 65/65 áreas tocadas ≥1 vez. ~16 fixes verificados.
-Pasada 2 · lente L3 (concurrencia/idempotencia): baja a "flujo fino" en las áreas críticas.
-PROFUNDIDAD real (la métrica honesta): ~10-15% (≈55-60 funciones de ~11.400 símbolos, 1 lente c/u).
-```
-La ✅ de un área = "barrida 1 flujo con 1 lente", **no** "revisada entera". `/clean forja map` archiva la
-pasada, resetea a ⬜ y rota a la siguiente lente.
+### 4 · El mapa de avance
+Lleva un mapa de qué ha revisado para no repetir, con un **porcentaje honesto**: te dice "cuánto terreno he
+pisado", que **no** es lo mismo que "cuánto he mirado a fondo". Nunca te vende más de lo que hizo.
 
-### 5 · Cómo lo cierras
-- **`no-pr`**: revisas los cambios en Source Control y **commiteas tú por lotes** (en el run real: 14 fixes
-  commiteados en 2 lotes, checkpoint suite completa 2437 passed).
-- **`pr`**: revisas la rama `loop/forja/auto` / el PR en GitHub. **Nunca se auto-mergea.**
-- **`para`**: detiene el loop y muestra el resumen consolidado (fixes verificados + items de inbox).
+### 5 · Cómo termina
+- **sin PR**: revisas los cambios en tu editor y los guardas por tandas.
+- **con PR**: revisas todo junto en GitHub. **Nunca se sube solo.**
+- **`para`**: lo detiene y te da un resumen (lo arreglado + lo que dejó en el inbox).
 
-### 6 · Coste real (de este turno)
-≈ **203K tokens** el turno completo de `client_portal` (verificación + fix + evaluador, **9 agentes**).
-Profundizar cuesta tokens: 1 lente es rápido y superficial; 6 lentes = barrido completo, más caro.
+### 6 · Cuánto cuesta
+Cuanto más a fondo, más "tokens" (lo que gasta la IA): 1 lente es rápido y superficial; las 6 son un
+repaso completo y más caro. El modo `forja max` busca el punto justo (ver arriba).
 
 ## La idea en una frase
 **Átomos para el trabajo; grafo + orquestador para el marco y la puerta.** Sub-agentes atómicos
