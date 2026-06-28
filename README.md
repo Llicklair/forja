@@ -64,6 +64,32 @@ El usuario elige cómo entrega el loop; sin decir nada, **recuerda el último mo
 > ⚠️ Para arreglar **detalles atómicos sin gastar tokens**, usa `forja detector` — **no** `/loop forja` (ese
 > es el loop completo de 6 lentes). Ver [Modos](#modos-con-pr-o-sin-pr--el-pr-es-opcional) y la sección 1C del SKILL.
 
+## Modo MAX (afinado) — barato + profundo a la vez (el embudo)
+`forja max` persigue las cuatro cosas a la vez: **barrido grande · soluciones atómicas grandes · máxima
+profundidad · mínimo coste**. Lo logra con un **embudo**: la capa gratis barre TODO el repo y el LLM solo
+profundiza donde hay valor. Sin instalar nada (AST + GitNexus).
+```
+CAPA BARATA (≈0 tokens, todo el repo)
+  detector AST + grafo GitNexus (blast-radius)
+  → candidatos RANKEADOS por  severidad × alcance × confianza  (menos el ledger → solo lo nuevo)
+        ↓  top-K que entra en el PRESUPUESTO de tokens  (forja max 300k)
+LLM PROFUNDO (caro, SOLO en el top-K)
+  1 lectura del flujo → las 6 lentes de golpe  (~6× más barato que 6 finders)
+        ↓
+FIX POR CLASE (grande, no parches sueltos)
+  helper compartido aplicado a toda la familia + 1 test que la cubre
+        ↓
+PUERTA adversarial (otro modelo): suite completa + barrido por-clase + sin sobre-afirmar
+```
+- **Coste acotado**: el top-K se corta por un techo de tokens (`forja max 300k`), no "hasta agotar"; lo que
+  no entra queda en el ledger para la vuelta siguiente.
+- **Modelo por etapa**: triaje en barato (haiku), finder profundo en sonnet, fix difícil + evaluador en el fuerte.
+- **Honestidad**: MAX **no** analiza a fondo *todo* el repo gratis — profundiza solo lo que la capa barata
+  marca como valioso; el `coverage.md` reporta el % real cubierto, no el barato.
+
+Úsalo: `forja max` (una pasada) · `forja max 300k` (con presupuesto) · `loop forja max` (continuo). Detalle
+en la **§1D** de [`skills/forja/SKILL.md`](skills/forja/SKILL.md).
+
 ## Ejemplo end-to-end (un run real)
 Para que sepas **qué esperar** antes de soltarlo, este es un turno real sobre un backend FastAPI +
 SQLAlchemy en modo `no-pr` (el loop edita el working tree **sin commitear**; tú revisas y commiteas).
