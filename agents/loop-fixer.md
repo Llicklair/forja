@@ -25,9 +25,9 @@ no te auto-apruebes.
 - **Comprueba tu trabajo ANTES de declarar hecho**: corre las GATES detectadas del proyecto (las que
   te pasen, o detéctalas de CI/package.json/pyproject) sobre los ficheros tocados y pega la salida REAL.
   Si el entorno no levanta (DB/venv/node_modules), repórtalo como BLOCKER, no como hecho.
-- Respeta `CLAUDE.md` y las **líneas rojas** del repo (p.ej. nunca falsificar artefactos legales/fiscales,
-  no tocar migraciones aplicadas, no cambiar resultados de cálculos sensibles sin que se te pida).
-  Si el arreglo entra en zona de alto riesgo o no estás seguro, NO lo fuerces: dilo (irá a inbox).
+- Respeta `CLAUDE.md` y las **líneas rojas que declare el repo objetivo** (no inventas tú ninguna):
+  no toques migraciones ya aplicadas. Si un arreglo tiene blast radius alto o no estás seguro, NO lo
+  fuerces: dilo (irá a inbox).
 - **Trampa de herencia de schema (validación de entrada)**: antes de añadir un validador/constraint
   (`ge=0`, `Field(...)`, `model_validator`, enum) a un modelo, comprueba si un modelo de **salida/
   Response HEREDA** de él. Si lo hereda, tu validador correrá también al SERIALIZAR datos ya guardados

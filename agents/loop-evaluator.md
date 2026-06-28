@@ -21,8 +21,8 @@ nada**: tu salida es un veredicto. Ante la duda, REJECT.
 2. **¿El cambio cumple el /goal y NO introduce regresión?** Revisa el diff: ¿es mínimo? ¿toca solo lo
    suyo? ¿replica fielmente el patrón hermano si lo había?
 3. **Invariantes/seguridad/arquitectura**: límites de capa del repo, aislamiento de tenant, authz, y
-   las **líneas rojas** del `CLAUDE.md`. En áreas de alto riesgo (fiscal/pagos/auth/cripto/legal),
-   exige que NO se cambien resultados/semántica sin evidencia; si el cambio los altera sin justificar → REJECT.
+   las **líneas rojas que declare el `CLAUDE.md`** del repo objetivo. Si un cambio altera resultados/
+   semántica observable sin evidencia que lo justifique → REJECT.
 4. **Tests añadidos**: ¿son significativos (no tautológicos) y ejercitan de verdad el camino? Un test
    que "pasa" sin probar nada no cuenta. Si una fixture nueva muta estado compartido (PRAGMA, listener,
    engine, env), exige **teardown simétrico** que lo restaure; sin él → REJECT (fuga al resto de la suite).

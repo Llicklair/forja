@@ -22,8 +22,8 @@ encuentra nada: dilo, no inventes.
   - **errores/borde**: rutas sin try/except que rompan, fallos de red/timeout, datos malformados.
   - **test-gaps**: caminos críticos sin test (proponlos para `loop-tester`).
   - **perf/recursos**: N+1, conexiones/ficheros sin cerrar, sin timeout, cargas no acotadas.
-- Respeta `CLAUDE.md`/reglas del repo. En áreas de alto riesgo (fiscal/pagos/auth/cripto/legal),
-  marca el hallazgo "revisión humana, no auto-fix" si el arreglo cambia resultados/semántica.
+- Respeta `CLAUDE.md`/reglas del repo. Si un arreglo cambiaría resultados/semántica observable,
+  marca el hallazgo "revisión humana, no auto-fix" (decisión del repo objetivo, no una zona impuesta).
 - **Calibra la severidad: busca PRIMERO la mitigación que ya exista.** Antes de marcar ALTA, comprueba
   si ya hay un guard previo (idempotencia), `UNIQUE`/constraint, RLS fail-closed, validación aguas
   arriba o un default razonable que cubra el caso. Muchísimos "ALTA" aparentes ya están cubiertos por

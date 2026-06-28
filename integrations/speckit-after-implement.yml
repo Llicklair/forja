@@ -21,5 +21,5 @@ hooks:
       description: >
         Verificación cruzada de la forja: corre la suite COMPLETA (gate de
         regresión), comprueba que el código cumple la spec y respeta la
-        constitución / zonas NO-EDIT, con un evaluador en OTRO modelo.
+        constitución del repo, con un evaluador en OTRO modelo.
         REJECT -> el item vuelve al implementer o va a inbox.

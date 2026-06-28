@@ -1,6 +1,6 @@
 ---
 name: construye
-description: "Construcción autónoma dirigida por especificación (Spec-Driven Build) — la hermana de /forja que EDIFICA en vez de revisar. Se apoya en GitHub Spec Kit para la mitad delantera (constitution→spec→clarify→plan→tasks) y le injerta el motor verificado de la forja en /speckit-implement: test-first de ACEPTACIÓN, generador≠evaluador (otro modelo), gate de suite COMPLETA (sin regresión), barrido por-clase, zonas NO-EDIT y entrega en PR o local — NUNCA auto-merge. Usa /speckit-converge para brownfield (proyectos grandes, feature a feature). Úsalo con /construye (una feature/lote) o /loop construye (continuo)."
+description: "Construcción autónoma dirigida por especificación (Spec-Driven Build) — la hermana de /forja que EDIFICA en vez de revisar. Se apoya en GitHub Spec Kit para la mitad delantera (constitution→spec→clarify→plan→tasks) y le injerta el motor verificado de la forja en /speckit-implement: test-first de ACEPTACIÓN, generador≠evaluador (otro modelo), gate de suite COMPLETA (sin regresión), barrido por-clase y entrega en PR o local — NUNCA auto-merge. Usa /speckit-converge para brownfield (proyectos grandes, feature a feature). Úsalo con /construye (una feature/lote) o /loop construye (continuo)."
 ---
 
 # /construye — Spec-Driven Build verificado (la forja que edifica)
@@ -25,7 +25,7 @@ nada. `/speckit-converge` es el bucle brownfield (mapea intención→código, **
 | converge (gaps brownfield, append-only) | test-first de **aceptación** (DoD ejecutable) |
 | hooks + `[P]` (paralelo) + estructura TDD | **generador≠evaluador** en **otro modelo** |
 | | gate de **suite COMPLETA** (sin regresión) + checkpoints |
-| | **barrido por-clase** + zonas **NO-EDIT** |
+| | **barrido por-clase** (sin regresión) |
 | | worktree · pr/no-pr · **nunca auto-merge** · gitnexus MARCO |
 
 ## 0. SETUP (detéctalo, no lo hardcodees)
@@ -33,8 +33,8 @@ nada. `/speckit-converge` es el bucle brownfield (mapea intención→código, **
   `uvx --from git+https://github.com/github/spec-kit.git specify init . --integration claude --script sh`.
   Sin Spec Kit, `/construye` no arranca: lo reporta y para.
 - **Sembrar la constitución** (`/speckit-constitution`): puéblala desde `ARCHITECTURE.md` + `CLAUDE.md` +
-  reglas rojas del repo. Codifica explícitamente las **zonas NO-EDIT** (fiscal/contable/nómina, cripto/
-  pagos) como principios MUST. La constitución es la LEY que el evaluador hace cumplir (REJECT si se viola).
+  las reglas rojas del repo. Si el proyecto quiere blindar áreas sensibles, que las declare aquí como
+  principios MUST. La constitución es la LEY que el evaluador hace cumplir (REJECT si se viola).
 - **Gates reales**: lee `.github/workflows/*`, `package.json` scripts, `pyproject.toml [tool.*]`, `Makefile`
   y anota los comandos exactos de lint/type/test/build por subproyecto.
 - **Modo de entrega** (igual que la forja): `pr` (worktree + PR acumulado) o `no-pr` (working tree local,
@@ -66,11 +66,11 @@ Por cada tarea/historia de `tasks.md`:
   FR-###/SC-###/acceptance-scenarios **EN ROJO** (aún no construido). Es el *Definition of Done* ejecutable.
   El evaluador confirma que el test es significativo (no tautológico) y que ejercita el camino de la spec.
 - **ÁTOMO build** (`loop-fixer` como *implementer*): construye la tarea hasta poner el test **verde**, en
-  el worktree, respetando capas + constitución. **PROHIBIDO tocar zonas NO-EDIT** → esas van a inbox.
+  el worktree, respetando capas + constitución (lo que ésta declare intocable → inbox).
 - **PUERTA — generador≠evaluador** (`loop-evaluator`, **OTRO modelo**, asume roto): verifica
   (a) test de aceptación verde, (b) **suite COMPLETA** verde — **no rompe lo existente** (gate de
   regresión: lo más importante en brownfield), (c) lint/type/build, (d) ¿el código **cumple la spec** de
-  verdad? (no un verde tautológico), (e) ¿respeta **constitución / NO-EDIT**? REJECT → vuelve al
+  verdad? (no un verde tautológico), (e) ¿respeta la **constitución**? REJECT → vuelve al
   implementer (máx 3 rondas). Tras 3 fallos → revierte e item a inbox con `infra-fail`/`needs-human`.
 - **Marca `[X]` en `tasks.md` SOLO tras PASS del evaluador** (lo escribe el orquestador, no el worker).
 - **Independencia de modelo** (no opcional): el evaluador corre en modelo DISTINTO al implementer; el
@@ -101,7 +101,7 @@ alguien corre `/speckit-implement` a mano**, registra un `hooks.after_implement`
 requisito.
 
 ## Honestidad (igual de dura que en la forja)
-- `/construye` **sube el suelo**: construye lo verificable y **escala lo dudoso** (NO-EDIT, decisiones de
+- `/construye` **sube el suelo**: construye lo verificable y **escala lo dudoso** (decisiones de
   producto, ambigüedad de spec) a clarify/inbox. No es un ingeniero senior; es un loop verificado.
 - "**Construido y verificado**" = test de aceptación verde + suite completa verde + cumple la spec. Lo no
   probable con la infra (concurrencia que pide BD real, etc.) → "**correcto por construcción, sin prueba

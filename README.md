@@ -88,8 +88,8 @@ Tomemos el flujo real `client_portal` con la lente **L2 (seguridad)**:
    en el WHERE) en un worktree aislado, y hace **escaneo de hermanas**: el único otro lookup del patrón
    (`/auth`) ya estaba bien → fix de un solo sitio (no de una instancia suelta).
 5. **PUERTA · evaluador** — `loop-evaluator`, en **otro modelo**, corre las gates reales: suite COMPLETA
-   (no `-k`), dedup, y veta si el comentario sobre-afirma o si toca una zona NO-EDIT. Dictamen
-   **PASS / REJECT / BLOCKER**. Aquí: **PASS** (correcto, mínimo, aditivo, sin romper callers).
+   (no `-k`), dedup, y veta si el comentario sobre-afirma o si un cambio altera la semántica sin prueba.
+   Dictamen **PASS / REJECT / BLOCKER**. Aquí: **PASS** (correcto, mínimo, aditivo, sin romper callers).
 
 ### 2 · Lo que ves — un fix verificado
 Cada fix llega documentado así (extracto real, condensado):
@@ -104,7 +104,8 @@ Cada fix llega documentado así (extracto real, condensado):
 En `no-pr` el cambio queda **sin commitear** en tu working tree; lo ves en el panel Source Control del IDE.
 
 ### 3 · Lo que ves — el inbox (lo que NO se auto-arregla)
-Lo arriesgado/fiscal **no se parchea**: se drena a `inbox.md` **con un repro** para que **tú** decidas.
+Lo que no es un arreglo seguro y objetivo **no se parchea**: se drena a `inbox.md` **con un repro** para
+que **tú** decidas (necesita una migración, tiene blast-radius alto, o es una decisión de negocio).
 Ejemplos reales de esa misma sesión:
 - **ALTA** — el gate de autonomía se bypasea para importes ≤5000 € (asiento/factura/nómina): 4 tools
   hermanas no llaman a `evaluate_autonomy`. *No auto-fix: cambia comportamiento fiscal de todos los tenants.*
@@ -156,11 +157,6 @@ la puerta de calidad que a los átomos les falta.
   `-k` no ve.
 
 ## Gates duras (bloquean el lote — reglas, no consejos)
-- **Zona NO-EDIT (fiscal/contable/nómina · cripto/pagos)**: el fixer tiene **PROHIBIDO editar** cálculo
-  fiscal (modelos AEAT, IVA, retenciones, asientos, numeración correlativa, IRPF/IS) y pagos/cripto.
-  Reporta a inbox **con un test que demuestra el problema** — un LLM no es asesor fiscal. El evaluador hace
-  **REJECT automático** si un fix toca un fichero NO-EDIT. Cambiar una cifra fiscal "porque parece más
-  correcta" es justo lo que el loop NO debe hacer.
 - **Barrido por-clase**: antes de cerrar el lote, por CADA patrón arreglado el orquestador grepea TODO el
   repo y prueba `nº sitios del patrón == saneados + inbox`. "Lo arreglé" exige la **lista exhaustiva del
   grep**, no el sitio tocado; un fix de UNA instancia sin esa prueba → REJECT. (El bug casi nunca está en
@@ -174,10 +170,10 @@ la puerta de calidad que a los átomos les falta.
 ## Los agentes (`agents/`)
 - `loop-finder` — explora un flujo con UNA lente; reporta defectos con evidencia. No edita.
 - `loop-fixer` — implementa UN arreglo en un worktree; verifica con las gates; commitea. No abre PR.
-  **Prohibido tocar zonas NO-EDIT** (fiscal/pagos): esas van a inbox con repro, no se parchean.
+  Respeta las líneas rojas que declare el repo objetivo; lo dudoso o de alto blast-radius → inbox.
 - `loop-tester` — escribe un test/repro (test-first). Aditivo, auto-verificable.
 - `loop-evaluator` — adversarial, otro modelo; ejecuta las gates reales; PASS/REJECT/BLOCKER. El "decir no".
-  **REJECT automático** si un fix toca NO-EDIT o si un comentario sobre-afirma garantía concurrente.
+  **REJECT automático** si un comentario sobre-afirma garantía concurrente o si un cambio altera la semántica sin evidencia.
 
 ## Modalidad hermana: `/construye` — Spec-Driven Build (la forja que edifica)
 La forja **revisa** lo que existe; **`/construye`** **edifica** lo que falta desde una **especificación**.
@@ -188,7 +184,7 @@ delantera (`constitution → spec → clarify → plan → tasks`) y le injerta 
 `/speckit-implement` — el hueco que Spec Kit deja a propósito ("external verifier handles verification"):
 - **test-first de ACEPTACIÓN**: los criterios de la spec se vuelven un test en rojo → construir hasta verde.
 - **generador≠evaluador** en **otro modelo**: verifica que cumple la spec, sin auto-aprobarse.
-- **gate de suite COMPLETA** (no romper lo existente), **barrido por-clase**, zonas **NO-EDIT**.
+- **gate de suite COMPLETA** (no romper lo existente), **barrido por-clase**.
 - **`/speckit-converge`** para brownfield: mapea intención→código **atado al scope del plan** (no al repo
   entero) y añade solo lo que falta → **viable en proyectos grandes, feature a feature**.
 
@@ -235,7 +231,7 @@ marco global por grafo; si no, usa grep).
 
 ## Honestidad (léelo)
 - El loop **converge / reduce**, no **elimina**. Sube el suelo: caza una clase grande de defectos
-  detectables, arregla los seguros, y **escala los delicados** (fiscal/dinero/legal) para que tú decidas.
+  detectables, arregla los seguros, y **escala los inciertos o de alto riesgo** para que tú decidas.
 - El % de cobertura por ÁREAS es **amplitud de primer contacto**, no profundidad. Una ✅ con 1 lente ≠
   área revisada. Reporta siempre el matiz.
 - Lo no testeable con la infra (concurrencia que pide BD real, RLS, locks) se etiqueta **"correcto por

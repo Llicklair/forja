@@ -12,7 +12,7 @@ El generador no se auto-aprueba: lo verifica un evaluador independiente (otro mo
 
 > Portabilidad: este skill NO asume ningún stack. Detecta el proyecto y se adapta (ver §0).
 > Vive en `~/.claude/` → disponible en cualquier repo. Un proyecto puede tener su propio
-> `.claude/skills/forja` que lo especialice (p.ej. con reglas fiscales); ese gana localmente.
+> `.claude/skills/forja` que lo especialice (p.ej. con sus propias líneas rojas); ese gana localmente.
 
 ## Modos de entrega: con-PR / sin-PR — **el PR es OPCIONAL**
 El usuario elige cómo entrega el loop (por defecto recuerda el último modo):
@@ -70,16 +70,9 @@ PUERTA GLOBAL**, y el marco y la puerta los sostiene el **ORQUESTADOR** (la sesi
 - **GitNexus**: ¿hay grafo indexado? (`gitnexus_list_repos`). Si sí → discovery por FLUJOS (§1A).
   Si no → discovery por directorios + tests (§1B). Si está stale, `npx gitnexus analyze` primero.
 - **Reglas del repo**: lee `CLAUDE.md`/`AGENTS.md`/`CONTRIBUTING` y respétalas (líneas rojas,
-  límites de capa, disciplina de commits). Si hay un área de alto riesgo (pagos, fiscal, auth,
-  cripto, migraciones), márcala "solo-PR + revisión humana, nunca cálculo a ciegas".
-- **ZONA SOLO-HALLAZGO (prohibido editar a ciegas) — regla dura, no consejo.** En cálculo
-  fiscal/contable/nómina (modelos AEAT, IVA, retenciones, asientos, numeración correlativa, IS/IRPF)
-  y en cripto/pagos, el loop **REPORTA pero NO PARCHEA**: el fixer tiene PROHIBIDO editar esos
-  ficheros; el hallazgo va a inbox con un **test que demuestra el problema**, para que un humano/asesor
-  decida. Cambiar una cifra fiscal "porque parece más correcta" es exactamente lo que el loop NO debe
-  hacer (un LLM no es asesor fiscal). Detecta la zona por ruta/keyword (`reports/`, `aeat`, `modelo_*`,
-  `iva`, `retencion`, `asiento`, `payroll`, `nomina`) y anótala en `state.md` como `NO-EDIT`. El
-  evaluador REJECT automático si un fix toca un fichero `NO-EDIT`.
+  límites de capa, disciplina de commits). El loop **no impone ninguna zona prohibida por sí mismo**:
+  las únicas líneas rojas son las que declare el repo objetivo en su `CLAUDE.md`. Si un proyecto quiere
+  blindar áreas sensibles (p.ej. cálculo de dinero/legal), que lo escriba ahí y el evaluador lo respeta.
 - **Arranque seguro / fallos de ENTORNO (no solo de worker).** Antes de reusar el worktree acumulador:
   `git -C <worktree> status --porcelain`; si hay cambios sin commit (run anterior muerto por cuota/crash
   a media edición) → **resetéalo** (`reset --hard` + `clean -fd`) ANTES de seguir, no acumules estado
@@ -146,7 +139,7 @@ segundos por ~0 tokens y el LLM solo **remedia los hits**. Barato y FINITO (conv
   `fixed + FP-descartados + pendientes`. Cada vuelta **resta el ledger** y tría **solo lo NUEVO** (no re-tría).
 - **La vuelta**: (1) `scan()` (~segundos); (2) triar lo nuevo en un **SUBAGENTE** (no inflar contexto);
   (3) arreglar **solo los REALES** con guards mínimos contract-preserving, **inbox** lo arriesgado
-  (cálculo fiscal/financiero, migraciones) — sin sobre-afirmar concurrencia (son guards de re-entrada
+  (migraciones, cambios de alto blast-radius) — sin sobre-afirmar concurrencia (son guards de re-entrada
   SECUENCIAL, no de carrera); (4) verificar con **tests AFECTADOS** (segundos), NO la suite completa;
   (5) actualizar el ledger.
 - **Checkpoint**: la **suite COMPLETA** se corre **UNA vez por sesión** (de fondo), nunca por vuelta (si no,
@@ -167,7 +160,7 @@ ficheros cambiados recientemente (git log: más probabilidad de bug) · informes
 
 ### JUDGE (pone el techo de calidad — el documento, Secc. III)
 Por cada candidato: **¿IMPORTA?** Defecto real con arreglo objetivo → fix. Subjetivo/refactor de
-gusto/que cambia resultados sensibles (fiscal/pagos) → a inbox como propuesta. Ruido advisory
+gusto/que cambia comportamiento observable sin que se pida → a inbox como propuesta. Ruido advisory
 (formato, type-args triviales) → descártalo. Ya en vuelo (bitácora/ramas) → sáltalo.
 
 ### Anti-falso-positivo (verificación adversarial)
@@ -240,8 +233,8 @@ confirma que el test es significativo (no tautológico) y que de verdad ejercita
   bitácora de `state.md`. **Corte de cascada**: si fallan **N≥3 subagentes seguidos** (señal de entorno
   roto, cuota, o worktree corrupto), **detén la pasada** y resume — no sigas acumulando estado roto de
   noche. Un worktree que quedó sucio tras un crash se recupera con reset/clean, nunca se reutiliza a medias.
-- En áreas de alto riesgo (fiscal/pagos/auth/cripto), el evaluador es estricto y exige no cambiar
-  resultados/semántica sin evidencia; ante duda, REJECT → inbox.
+- Si un cambio altera resultados/semántica observable, el evaluador exige evidencia (un test) que lo
+  justifique; ante duda, REJECT → inbox. Vale para cualquier código, no para una zona concreta.
 - **Gate de suite COMPLETA — el verde por subconjunto engaña**: si el cambio toca `conftest`/fixtures/
   migraciones/estado de test compartido o **añade una fixture**, corre la **suite entera**, no solo
   `-k <área>`: las fugas entre tests (estado compartido) SOLO aparecen ahí. Además **checkpoint
