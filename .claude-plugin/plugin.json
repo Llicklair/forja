@@ -1,0 +1,22 @@
+{
+  "name": "forja",
+  "version": "2.0.0",
+  "description": "Loop Engineering portable: bucle autónomo que revisa un proyecto por flujos de ejecución (GitNexus), escribe tests (test-first), arregla lo seguro en worktrees aislados, lo verifica con un evaluador adversarial independiente y abre PRs — nunca auto-mergea. Incluye la skill /forja y 4 subagentes (finder/fixer/tester/evaluator), lente rotativa o en paralelo, marco global por grafo y mapa de cobertura.",
+  "author": {
+    "name": "Marcos Recio"
+  },
+  "homepage": "https://github.com/Llicklair/forja",
+  "repository": "https://github.com/Llicklair/forja",
+  "license": "MIT",
+  "keywords": [
+    "loop-engineering",
+    "autonomous-review",
+    "gitnexus",
+    "test-first",
+    "refactoring",
+    "code-review",
+    "subagents"
+  ],
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

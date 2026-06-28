@@ -1,0 +1,15 @@
+# Estado local del loop / no publicar
+tasks/
+.claude-state/
+
+# Documentos no redistribuibles / locales
+*.pdf
+CLAUDE.md
+consejo-report*.md
+
+# Caches / SO
+.ruff_cache/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

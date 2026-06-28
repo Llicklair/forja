@@ -1,0 +1,29 @@
+{
+  "name": "forja-marketplace",
+  "owner": {
+    "name": "Marcos Recio"
+  },
+  "metadata": {
+    "description": "Loop Engineering portable — bucle autónomo de revisión de código (finder/fixer/tester/evaluator).",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "forja",
+      "source": "./",
+      "description": "Loop engineering portable: skill /forja + 4 subagentes (finder/fixer/tester/evaluator). Revisión autónoma por flujos (GitNexus), test-first, fan-out de lentes, mapa de cobertura, PRs sin auto-merge.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Marcos Recio"
+      },
+      "category": "development",
+      "keywords": [
+        "loop-engineering",
+        "autonomous-review",
+        "gitnexus",
+        "test-first",
+        "refactoring"
+      ]
+    }
+  ]
+}
